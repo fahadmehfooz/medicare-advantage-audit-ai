@@ -1,0 +1,121 @@
+# MCCV HCC Weights Configuration
+# These weights define how much each treatment modality contributes to the
+# coherence score for each HCC code.
+#
+# Weights are derived from clinical practice guidelines and reflect the
+# relative importance of each type of treatment evidence.
+#
+# Scale: 0.0 (not expected) to 1.0 (critical/mandatory)
+
+hcc_weights:
+  HCC18:  # Diabetes with Chronic Complications
+    name: "Diabetes with Chronic Complications"
+    payment_impact: 2500
+    weights:
+      pharmacy: 0.95    # Medications are critical
+      laboratory: 0.98  # HbA1c monitoring essential
+      specialist: 0.70  # Endocrinology recommended but not always seen
+      procedure: 0.65   # Eye/foot exams important
+    guideline_source: "ADA Standards of Care 2024"
+    
+  HCC19:  # Diabetes without Complication
+    name: "Diabetes without Complication"
+    payment_impact: 600
+    weights:
+      pharmacy: 0.90
+      laboratory: 0.95
+      specialist: 0.40   # Less specialist involvement expected
+      procedure: 0.50
+    guideline_source: "ADA Standards of Care 2024"
+    
+  HCC85:  # Congestive Heart Failure
+    name: "Congestive Heart Failure"
+    payment_impact: 3200
+    weights:
+      pharmacy: 0.98    # GDMT is critical
+      laboratory: 0.95  # BNP, metabolic panel important
+      specialist: 0.85  # Cardiology follow-up expected
+      procedure: 0.90   # Echo, stress test common
+    guideline_source: "ACC/AHA 2022 Heart Failure Guideline"
+    
+  HCC86:  # Acute Myocardial Infarction
+    name: "Acute Myocardial Infarction"
+    payment_impact: 4500
+    weights:
+      pharmacy: 0.99    # DAPT, statin mandatory
+      laboratory: 0.98  # Troponin, BNP essential
+      specialist: 0.95  # Interventional cardiology expected
+      procedure: 0.95   # Cardiac cath standard of care
+    guideline_source: "ACC/AHA 2021 ACS Guideline"
+    
+  HCC111:  # COPD
+    name: "Chronic Obstructive Pulmonary Disease"
+    payment_impact: 1800
+    weights:
+      pharmacy: 0.95    # Inhalers essential
+      laboratory: 0.70  # Labs less frequent
+      specialist: 0.75  # Pulmonology for moderate-severe
+      procedure: 0.85   # Spirometry important
+    guideline_source: "GOLD 2024 Report"
+    
+  HCC135:  # Acute Renal Failure
+    name: "Acute Renal Failure"
+    payment_impact: 3800
+    weights:
+      pharmacy: 0.85
+      laboratory: 0.99  # Creatinine/eGFR critical
+      specialist: 0.95  # Nephrology consultation expected
+      procedure: 0.80
+    guideline_source: "KDIGO 2021 AKI Guideline"
+    
+  HCC136:  # CKD Stage 5 / ESRD
+    name: "Chronic Kidney Disease Stage 5"
+    payment_impact: 6200
+    weights:
+      pharmacy: 0.90
+      laboratory: 0.99  # Frequent lab monitoring
+      specialist: 0.99  # Nephrology mandatory
+      procedure: 0.95   # Dialysis expected
+    guideline_source: "KDIGO 2021 CKD Guideline"
+    
+  HCC96:  # Specified Heart Arrhythmias
+    name: "Specified Heart Arrhythmias"
+    payment_impact: 1500
+    weights:
+      pharmacy: 0.95    # Anticoagulation critical
+      laboratory: 0.85  # INR if on warfarin
+      specialist: 0.80  # Cardiology/EP
+      procedure: 0.75   # ECG, Holter
+    guideline_source: "ACC/AHA 2023 Afib Guideline"
+    
+  HCC22:  # Morbid Obesity
+    name: "Morbid Obesity"
+    payment_impact: 800
+    weights:
+      pharmacy: 0.60    # Medications less common
+      laboratory: 0.85  # Metabolic labs
+      specialist: 0.50  # Bariatric referral variable
+      procedure: 0.40   # Surgery not always indicated
+    guideline_source: "AHA/ACC Obesity Guidelines"
+    
+  HCC12:  # Cancers
+    name: "Breast, Prostate, and Other Cancers"
+    payment_impact: 4200
+    weights:
+      pharmacy: 0.90    # Systemic therapy if indicated
+      laboratory: 0.95  # Tumor markers, CBC
+      specialist: 0.98  # Oncology mandatory
+      procedure: 0.95   # Imaging, biopsy, treatment
+    guideline_source: "NCCN Clinical Practice Guidelines"
+
+# Global settings
+scoring:
+  high_risk_threshold: 0.30
+  medium_risk_threshold: 0.60
+  
+  # Default weights if HCC not specified
+  default_weights:
+    pharmacy: 0.80
+    laboratory: 0.80
+    specialist: 0.70
+    procedure: 0.70
