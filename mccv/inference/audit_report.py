@@ -97,9 +97,15 @@ class AuditReportGenerator:
         modality_weight: float
     ) -> EvidenceAnalysis:
         """Analyze treatment evidence for a single modality."""
-        # Get expected treatments from knowledge graph
-        expected = self.kg.get_expected_treatments(hcc_code, treatment_type=modality)
-        expected_names = [t.treatment_name for t in expected]
+        # Get expected treatments from knowledge graph.
+        # IMPORTANT: Compare using `treatment_code` (matches our synthetic generator),
+        # but display human-readable `treatment_name` in the report.
+        kg_type = {"medication": "medication", "lab": "lab", "specialist": "specialist", "procedure": "procedure"}.get(
+            modality, modality
+        )
+        expected = self.kg.get_expected_treatments(hcc_code, treatment_type=kg_type)
+        expected_display = [t.treatment_name for t in expected]
+        expected_codes = [t.treatment_code for t in expected]
         
         # Find actual treatments in claims
         if modality == "medication":
@@ -121,18 +127,23 @@ class AuditReportGenerator:
         else:
             found = []
         
-        # Calculate missing treatments
-        missing = [t for t in expected_names if t.lower() not in [f.lower() for f in found]]
+        found_lower = [str(f).lower() for f in found]
+
+        # Calculate missing treatments (use codes for matching, names for display)
+        missing = []
+        for disp, code in zip(expected_display, expected_codes):
+            if str(code).lower() not in found_lower:
+                missing.append(disp)
         
         # Calculate modality score
-        if len(expected_names) > 0:
+        if len(expected_display) > 0:
             modality_score = len(found) / (len(found) + len(missing))
         else:
             modality_score = 1.0  # No expected treatments = no penalty
         
         return EvidenceAnalysis(
             modality=modality,
-            expected_treatments=expected_names,
+            expected_treatments=expected_display,
             found_treatments=found,
             missing_treatments=missing,
             modality_score=modality_score,

@@ -86,26 +86,26 @@ pip install -e .
 ### 1. Generate Synthetic Data
 
 ```python
-from mccv.data.synthetic_generator import MedicareSyntheticGenerator
+from mccv import get_synthetic_generator
 
-generator = MedicareSyntheticGenerator(n_beneficiaries=10000, fraud_rate=0.15)
-data = generator.generate()
+Generator = get_synthetic_generator()  # lite (pure python) by default
+generator = Generator(n_beneficiaries=10000, fraud_rate=0.15)
+data = generator.generate()  # dict of lists-of-dicts
 ```
 
-### 2. Train MCCV Model
+### 2. Run the end-to-end prototype (no numpy/pandas/torch required)
+
+```bash
+python examples/run_example_lite.py
+```
+
+### 3. Notes on the full DL/GNN model
 
 ```python
-from mccv.models.mccv_model import MCCVModel
+from mccv import get_mccv_model
 
+MCCVModel = get_mccv_model()  # requires torch + torch_geometric
 model = MCCVModel(hidden_dim=256, num_heads=8, num_layers=3)
-model.fit(train_data, val_data, epochs=100)
-```
-
-### 3. Generate Coherence Scores
-
-```python
-results = model.predict(test_data)
-high_risk = results[results['coherence_score'] < 0.3]
 ```
 
 ## License
