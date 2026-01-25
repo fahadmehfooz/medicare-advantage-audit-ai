@@ -36,11 +36,44 @@ Score <0.5 : Minimal/no evidence → Flag for audit
 
 ## Architecture
 
-MCCV employs a Heterogeneous Graph Neural Network (HGT) with Cross-Modal Transformer Attention:
+MCCV currently includes two implementations:
+
+### Phase 1: Rule-Based Prototype (CURRENT - WORKING)
+Multimodal coherence scoring using clinical knowledge graphs and treatment coverage calculations:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    MCCV Architecture                             │
+│                Rule-Based Coherence Scoring                      │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
+│  │   Pharmacy   │    │  Laboratory  │    │  Specialist  │       │
+│  │   Claims     │    │   Claims     │    │   Visits     │       │
+│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘       │
+│         └───────────────────┼───────────────────┘                │
+│                             ▼                                    │
+│              ┌─────────────────────────────┐                     │
+│              │  Clinical Knowledge Graph   │                     │
+│              │  (ADA, ACC/AHA, KDIGO)      │                     │
+│              └─────────────┬───────────────┘                     │
+│                            ▼                                     │
+│              ┌─────────────────────────────┐                     │
+│              │  Coverage Calculation        │                     │
+│              │  (Found / Expected)         │                     │
+│              └─────────────┬───────────────┘                     │
+│                            ▓                                     │
+│              ┌─────────────────────────────┐                     │
+│              │  Weighted Coherence Score   │                     │
+│              │  [0,1] per diagnosis        │                     │
+│              └─────────────────────────────┘                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Phase 2: GNN Enhancement (PROOF-OF-CONCEPT - IN DEVELOPMENT)
+Heterogeneous Graph Neural Network for learning clinical coherence patterns:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  GNN Architecture (SimpleHeteroGNN)              │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
 │  │   Pharmacy   │    │  Laboratory  │    │  Procedures  │       │
@@ -54,23 +87,32 @@ MCCV employs a Heterogeneous Graph Neural Network (HGT) with Cross-Modal Transfo
 │              └─────────────┬───────────────┘                     │
 │                            ▼                                     │
 │              ┌─────────────────────────────┐                     │
-│              │  GNN Encoder Stack          │                     │
-│              │  • HINormer (heterogeneous) │                     │
-│              │  • GraphSAGE (inductive)    │                     │
-│              │  • GATv2 (attention)        │                     │
+│              │  Node Embeddings (Learned)  │                     │
+│              │  • Beneficiaries (10K max)  │                     │
+│              │  • Diagnoses (200 HCCs)     │                     │
+│              │  • Treatments (1K codes)    │                     │
 │              └─────────────┬───────────────┘                     │
 │                            ▼                                     │
 │              ┌─────────────────────────────┐                     │
-│              │  Cross-Modal Transformer    │                     │
-│              │  Attention Layer            │                     │
+│              │  GNN Message Passing        │                     │
+│              │  • Layer 1: Aggregate       │                     │
+│              │  • Layer 2: Refine          │                     │
+│              │  • 752K parameters          │                     │
+│              └─────────────┬───────────────┘                     │
+│                            ▼                                     │
+│              ┌─────────────────────────────┐                     │
+│              │  MLP Output Layer           │                     │
+│              │  64 → 32 → 1 + Sigmoid      │                     │
 │              └─────────────┬───────────────┘                     │
 │                            ▼                                     │
 │              ┌─────────────────────────────┐                     │
 │              │  Coherence Score [0,1]      │                     │
-│              │  + SHAP Explanations        │                     │
+│              │  per diagnosis instance     │                     │
 │              └─────────────────────────────┘                     │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+**Status:** Proof-of-concept GNN implementation complete. Architecture is functional and generates predictions. Full training and comparison benchmarks in development.
 
 ## Installation
 
@@ -93,19 +135,44 @@ generator = Generator(n_beneficiaries=10000, fraud_rate=0.15)
 data = generator.generate()  # dict of lists-of-dicts
 ```
 
-### 2. Run the end-to-end prototype (no numpy/pandas/torch required)
+### 2. Run Rule-Based Prototype (no torch required)
 
 ```bash
 python examples/run_example_lite.py
 ```
 
-### 3. Notes on the full DL/GNN model
+### 3. Run GNN Proof-of-Concept Demo
+
+```bash
+python demo_gnn_simple.py
+```
+
+This demonstrates:
+- ✅ Working GNN architecture (752K parameters)
+- ✅ Heterogeneous graph processing
+- ✅ Coherence score generation
+- ✅ End-to-end forward pass
+
+### 4. GNN Model Usage
 
 ```python
-from mccv import get_mccv_model
+from mccv import get_simple_gnn, get_graph_builder
 
-MCCVModel = get_mccv_model()  # requires torch + torch_geometric
-model = MCCVModel(hidden_dim=256, num_heads=8, num_layers=3)
+# Build graph from data
+build_graph = get_graph_builder()
+graph_data, labels, diagnosis_ids, _ = build_graph(data)
+
+# Create model
+SimpleHeteroGNN = get_simple_gnn()
+model = SimpleHeteroGNN(hidden_dim=64, num_layers=2)
+
+# Generate predictions
+import torch
+model.eval()
+with torch.no_grad():
+    coherence_scores = model(graph_data)
+
+print(f"Generated {len(coherence_scores)} coherence scores")
 ```
 
 ## License

@@ -52,8 +52,49 @@ def get_mccv_model():
             "Install requirements.txt (or at least torch-geometric) to use the GNN model."
         ) from e
 
+def get_simple_gnn():
+    """
+    Get simplified GNN model (proof-of-concept).
+    
+    This is a lightweight GNN that requires only torch (not torch_geometric).
+    Used for demonstrating that GNN approach improves over rule-based baseline.
+    """
+    try:
+        from mccv.models.simple_gnn import SimpleHeteroGNN
+        return SimpleHeteroGNN
+    except Exception as e:  # pragma: no cover
+        raise ImportError(
+            "SimpleHeteroGNN requires torch.\n"
+            "Install: pip install torch"
+        ) from e
+
+def get_gnn_trainer():
+    """Get GNN trainer utility."""
+    try:
+        from mccv.models.simple_gnn import MCCVGNNTrainer
+        return MCCVGNNTrainer
+    except Exception as e:  # pragma: no cover
+        raise ImportError(
+            "MCCVGNNTrainer requires torch.\n"
+            "Install: pip install torch"
+        ) from e
+
+def get_graph_builder():
+    """Get heterogeneous graph builder."""
+    try:
+        from mccv.models.simple_gnn import build_heterogeneous_graph_from_data
+        return build_heterogeneous_graph_from_data
+    except Exception as e:  # pragma: no cover
+        raise ImportError(
+            "Graph builder requires torch.\n"
+            "Install: pip install torch"
+        ) from e
+
 __all__ = [
     "get_mccv_model",
+    "get_simple_gnn",
+    "get_gnn_trainer",
+    "get_graph_builder",
     "get_synthetic_generator",
     "get_knowledge_graph",
 ]
